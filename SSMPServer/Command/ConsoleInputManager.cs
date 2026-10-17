@@ -66,6 +66,12 @@ internal class ConsoleInputManager {
     /// </summary>
     /// <param name="token">The cancellation token for checking whether this task is requested to cancel.</param>
     private void StartReading(CancellationToken token) {
+        // Console.ReadKey throws when input is redirected (a service, a container, a script), so read whole lines
+        if (Console.IsInputRedirected) {
+            ReadRedirectedLines(token);
+            return;
+        }
+
         while (!token.IsCancellationRequested) {
             // This call will block until the user provides a key input
             var consoleKeyInfo = Console.ReadKey();
@@ -113,6 +119,23 @@ internal class ConsoleInputManager {
                 Console.Write('\r');
                 Console.Write(CurrentInput);
             }
+        }
+    }
+
+    /// <summary>
+    /// Read loop for redirected input. Every line is a command. At the end of the input the thread waits until the
+    /// manager is stopped instead of exiting, because it is the thread that keeps the server process alive.
+    /// </summary>
+    /// <param name="token">The cancellation token for checking whether this task is requested to cancel.</param>
+    private void ReadRedirectedLines(CancellationToken token) {
+        while (!token.IsCancellationRequested) {
+            var line = Console.ReadLine();
+            if (line == null) {
+                token.WaitHandle.WaitOne();
+                return;
+            }
+
+            ConsoleInputEvent?.Invoke(line);
         }
     }
 
