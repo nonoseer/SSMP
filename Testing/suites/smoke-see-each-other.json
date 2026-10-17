@@ -1,0 +1,98 @@
+{
+  "name": "smoke-see-each-other",
+  "description": "Two players load the same save, connect, and each sees the other move to a new position.",
+  "port": 26960,
+  "fullSync": false,
+  "timeoutSeconds": 420,
+  "mutations": [
+    "no_position_updates"
+  ],
+  "steps": {
+    "A": [
+      {
+        "op": "wait_menu"
+      },
+      {
+        "op": "connect",
+        "port": 26960
+      },
+      {
+        "op": "load_slot",
+        "slot": 1
+      },
+      {
+        "op": "barrier",
+        "name": "connected"
+      },
+      {
+        "op": "assert_players_in_scene",
+        "count": 1
+      },
+      {
+        "op": "move",
+        "dx": 4
+      },
+      {
+        "op": "publish_position",
+        "key": "A-moved"
+      },
+      {
+        "op": "barrier",
+        "name": "a-moved"
+      },
+      {
+        "op": "assert_remote_at",
+        "player": "B",
+        "key": "B-moved",
+        "tolerance": 1.0
+      },
+      {
+        "op": "barrier",
+        "name": "done"
+      }
+    ],
+    "B": [
+      {
+        "op": "wait_menu"
+      },
+      {
+        "op": "connect",
+        "port": 26960
+      },
+      {
+        "op": "load_slot",
+        "slot": 1
+      },
+      {
+        "op": "barrier",
+        "name": "connected"
+      },
+      {
+        "op": "assert_players_in_scene",
+        "count": 1
+      },
+      {
+        "op": "barrier",
+        "name": "a-moved"
+      },
+      {
+        "op": "assert_remote_at",
+        "player": "A",
+        "key": "A-moved",
+        "tolerance": 1.0
+      },
+      {
+        "op": "move",
+        "dx": -4
+      },
+      {
+        "op": "publish_position",
+        "key": "B-moved"
+      },
+      {
+        "op": "barrier",
+        "name": "done"
+      }
+    ]
+  }
+}
